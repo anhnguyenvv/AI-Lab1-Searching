@@ -15,6 +15,18 @@ def input_raw(map_input_path):
 
     return (map_size[0], map_size[1]), raw_map, (pacman_pos[0], pacman_pos[1])
 
+def update_graph_map(graph_map, raw_map, i, j):
+    cur = (i, j)
+    graph_map[cur] = []
+    # update posittion of possible direction from (i,j) 
+    if j - 1 >= 0 and raw_map[i][j - 1] != 1: 
+        left = (i, j - 1)
+        graph_map[left].append(cur)
+        graph_map[cur].append(left)
+    if i - 1 >= 0 and raw_map[i - 1][j] != 1:
+        up = (i -1, j)
+        graph_map[up].append(cur)
+        graph_map[cur].append(up)
 
 def read_map_level_1(map_input_path):
     map_size, raw_map, pacman_pos = input_raw(map_input_path)
@@ -28,18 +40,7 @@ def read_map_level_1(map_input_path):
                 if raw_map[i][j] == 2:
                     food_pos = (j, i)
 
-                cur = (j, i)
-                graph_map[cur] = []
-
-                if j - 1 >= 0 and raw_map[i][j - 1] != 1:
-                    left = (j - 1, i)
-                    graph_map[left] = graph_map[left] + [cur]
-                    graph_map[cur] = graph_map[cur] + [left]
-
-                if i - 1 >= 0 and raw_map[i - 1][j] != 1:
-                    up = (j, i - 1)
-                    graph_map[up] = graph_map[up] + [cur]
-                    graph_map[cur] = graph_map[cur] + [up]
+                update_graph_map(graph_map, raw_map, j, i)
             else:
                 wall_cell_list.append((j, i))
                 
@@ -62,19 +63,7 @@ def read_map_level_2(map_input_path, ghost_as_wall: bool):
                     ghost_pos_list.append((j, i))
                     if ghost_as_wall:
                         raw_map[i][j] = 1
-
-                cur = (j, i)
-                graph_map[cur] = []
-
-                if j - 1 >= 0 and raw_map[i][j - 1] != 1:
-                    left = (j - 1, i)
-                    graph_map[left] = graph_map[left] + [cur]
-                    graph_map[cur] = graph_map[cur] + [left]
-
-                if i - 1 >= 0 and raw_map[i - 1][j] != 1:
-                    up = (j, i - 1)
-                    graph_map[up] = graph_map[up] + [cur]
-                    graph_map[cur] = graph_map[cur] + [up]
+                update_graph_map(graph_map, raw_map, j, i)
             else:
                 wall_cell_list.append((j, i))
 
@@ -100,7 +89,19 @@ def init_cells(map_size, raw_map, pacman_pos):
         cells.append(row)
 
     return cells, pacman_cell
-
+    
+def update_graph_cell(graph_cell, raw_map, cells, i, j):
+    cur = cells[i][j]    
+    graph_cell[cur] = []
+    if j - 1 >= 0 and raw_map[i][j - 1] != 1:
+        up = cells[i][j - 1]
+        graph_cell[up].append(cur)
+        graph_cell[cur].append(up)
+    if i - 1 >= 0 and raw_map[i - 1][j] != 1:
+        left = cells[i - 1][j]
+        graph_cell[left].append(cur)
+        graph_cell[cur].append(left)
+        
 def read_map_level_3(map_input_path):
     map_size, raw_map, pacman_pos = input_raw(map_input_path)
 
@@ -121,17 +122,7 @@ def read_map_level_3(map_input_path):
                 elif CState.FOOD in cur.state:
                     food_cell_list.append(cur)
 
-                graph_map[cur] = []
-
-                if j - 1 >= 0 and raw_map[i][j - 1] != 1:
-                    left = cells[i][j - 1]
-                    graph_map[left] = graph_map[left] + [cur]
-                    graph_map[cur] = graph_map[cur] + [left]
-
-                if i - 1 >= 0 and raw_map[i - 1][j] != 1:
-                    up = cells[i - 1][j]
-                    graph_map[up] = graph_map[up] + [cur]
-                    graph_map[cur] = graph_map[cur] + [up]
+                update_graph_cell(graph_map, raw_map, cells, i, j)
             else:
                 wall_cell_list.append((j, i))
                 
@@ -152,34 +143,16 @@ def read_map_level_4(map_input_path):
     for i in range(map_size[0]):
         for j in range(map_size[1]):
             if raw_map[i][j] != 1:
-                c_cur = cells[i][j]
-                cur = (j, i)
+                c_cur = cells[i][j]              
 
                 if CState.GHOST in c_cur.state:
                     ghost_cell_list.append(c_cur)
                 elif CState.FOOD in c_cur.state:
                     food_cell_list.append(c_cur)
 
-                graph_cell[c_cur] = []
-                graph_map[cur] = []
+                update_graph_map(graph_map, raw_map, j, i)
+                update_graph_cell(graph_cell, raw_map, cells, i, j)
 
-                if j - 1 >= 0 and raw_map[i][j - 1] != 1:
-                    c_left = cells[i][j - 1]
-                    graph_cell[c_left] = graph_cell[c_left] + [c_cur]
-                    graph_cell[c_cur] = graph_cell[c_cur] + [c_left]
-
-                    left = (j - 1, i)
-                    graph_map[left] = graph_map[left] + [cur]
-                    graph_map[cur] = graph_map[cur] + [left]
-
-                if i - 1 >= 0 and raw_map[i - 1][j] != 1:
-                    c_up = cells[i - 1][j]
-                    graph_cell[c_up] = graph_cell[c_up] + [c_cur]
-                    graph_cell[c_cur] = graph_cell[c_cur] + [c_up]
-
-                    up = (j, i - 1)
-                    graph_map[up] = graph_map[up] + [cur]
-                    graph_map[cur] = graph_map[cur] + [up]
             else:
                 wall_cell_list.append((j, i))
 
